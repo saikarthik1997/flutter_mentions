@@ -1,13 +1,13 @@
 part of flutter_mentions;
 
 class OptionList extends StatelessWidget {
-  OptionList({
-    required this.data,
-    required this.onTap,
-    required this.suggestionListHeight,
-    this.suggestionBuilder,
-    this.suggestionListDecoration,
-  });
+  OptionList(
+      {required this.data,
+      required this.onTap,
+      required this.suggestionListHeight,
+      this.suggestionBuilder,
+      this.suggestionListDecoration,
+      required this.suggestionPopUpWidth});
 
   final Widget Function(Map<String, dynamic>)? suggestionBuilder;
 
@@ -18,11 +18,13 @@ class OptionList extends StatelessWidget {
   final double suggestionListHeight;
 
   final BoxDecoration? suggestionListDecoration;
+  final double suggestionPopUpWidth;
 
   @override
   Widget build(BuildContext context) {
     return data.isNotEmpty
         ? Container(
+            width: suggestionPopUpWidth,
             decoration:
                 suggestionListDecoration ?? BoxDecoration(color: Colors.white),
             constraints: BoxConstraints(

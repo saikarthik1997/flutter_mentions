@@ -50,12 +50,16 @@ class FlutterMentions extends StatefulWidget {
     this.appendSpaceOnAdd = true,
     this.hideSuggestionList = false,
     this.onSuggestionVisibleChanged,
+    this.suggestionPopUpWidth = 300.0,
   }) : super(key: key);
 
   final bool hideSuggestionList;
 
   /// default text for the Mention Input.
   final String? defaultText;
+
+  ///default width for suggestion popup list defaults to 300
+  final double suggestionPopUpWidth;
 
   /// Triggers when the suggestion list visibility changed.
   final Function(bool)? onSuggestionVisibleChanged;
@@ -424,6 +428,7 @@ class FlutterMentionsState extends State<FlutterMentions> {
           builder: (BuildContext context, bool show, Widget? child) {
             return show && !widget.hideSuggestionList
                 ? OptionList(
+              suggestionPopUpWidth:widget.suggestionPopUpWidth,
                     suggestionListHeight: widget.suggestionListHeight,
                     suggestionBuilder: list.suggestionBuilder,
                     suggestionListDecoration: widget.suggestionListDecoration,

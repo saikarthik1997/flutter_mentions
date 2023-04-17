@@ -323,6 +323,30 @@ class FlutterMentionsState extends State<FlutterMentions> {
         TextSelection.fromPosition(TextPosition(offset: nextCursorPosition));
   }
 
+  final textFieldKey = GlobalKey();
+  Offset? _cursorPosition = Offset.zero;
+  void _updateCursorPosition() {
+    final renderEditable = textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderEditable == null || !mounted) {
+      return;
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: controller!.text,
+        style: widget.style,
+      ),
+      textDirection: widget.textDirection ?? TextDirection.ltr,
+    );
+    textPainter.layout(maxWidth: renderEditable.constraints.maxWidth);
+    final cursorOffset = textPainter.getOffsetForCaret(controller!.selection.extent, Rect.zero);
+    // final position = renderEditable.localToGlobal(cursorOffset);
+
+    setState(() {
+      _cursorPosition = Offset(cursorOffset.dx+10, cursorOffset.dy+20);
+    });
+  }
+
   void suggestionListerner() {
     final cursorPos = controller!.selection.baseOffset;
 
@@ -355,6 +379,9 @@ class FlutterMentionsState extends State<FlutterMentions> {
       setState(() {
         _selectedMention = val == -1 ? null : lengthMap[val];
       });
+      if(widget.suggestionPosition == SuggestionPosition.Cursor) {
+        _updateCursorPosition();
+      }
     }
   }
 
@@ -417,42 +444,53 @@ class FlutterMentionsState extends State<FlutterMentions> {
 
     return Container(
       child: PortalEntry(
-        portalAnchor: widget.suggestionPosition == SuggestionPosition.Bottom
+        portalAnchor: widget.suggestionPosition == SuggestionPosition.Cursor
+        ? Alignment.topLeft :
+        widget.suggestionPosition == SuggestionPosition.Bottom
             ? Alignment.topCenter
             : Alignment.bottomCenter,
-        childAnchor: widget.suggestionPosition == SuggestionPosition.Bottom
+        childAnchor: widget.suggestionPosition == SuggestionPosition.Cursor
+            ? Alignment.topLeft :
+        widget.suggestionPosition == SuggestionPosition.Bottom
             ? Alignment.bottomCenter
             : Alignment.topCenter,
-        portal: ValueListenableBuilder(
-          valueListenable: showSuggestions,
-          builder: (BuildContext context, bool show, Widget? child) {
-            return show && !widget.hideSuggestionList
-                ? OptionList(
-              suggestionPopUpWidth:widget.suggestionPopUpWidth,
-                    suggestionListHeight: widget.suggestionListHeight,
-                    suggestionBuilder: list.suggestionBuilder,
-                    suggestionListDecoration: widget.suggestionListDecoration,
-                    data: list.data.where((element) {
-                      final ele = element['display'].toLowerCase();
-                      final str = _selectedMention!.str
-                          .toLowerCase()
-                          .replaceAll(RegExp(_pattern), '');
 
-                      return ele == str ? false : ele.contains(str);
-                    }).toList(),
-                    onTap: (value) {
-                      addMention(value, list);
-                      showSuggestions.value = false;
-                    },
-                  )
-                : Container();
-          },
+        portal: Padding(
+          padding: widget.suggestionPosition == SuggestionPosition.Cursor
+              ? EdgeInsets.only(left: _cursorPosition?.dx ?? 0, top: _cursorPosition?.dy ?? 0)
+          : EdgeInsets.zero,
+          child: ValueListenableBuilder(
+            valueListenable: showSuggestions,
+            builder: (BuildContext context, bool show, Widget? child) {
+              return show && !widget.hideSuggestionList
+                  ? OptionList(
+                suggestionPopUpWidth:widget.suggestionPopUpWidth,
+                      suggestionListHeight: widget.suggestionListHeight,
+                      suggestionBuilder: list.suggestionBuilder,
+                      suggestionListDecoration: widget.suggestionListDecoration,
+                      data: list.data.where((element) {
+                        final ele = element['display'].toLowerCase();
+                        final str = _selectedMention!.str
+                            .toLowerCase()
+                            .replaceAll(RegExp(_pattern), '');
+
+                        return ele == str ? false : ele.contains(str);
+                      }).toList(),
+                      onTap: (value) {
+                        addMention(value, list);
+                        showSuggestions.value = false;
+                      },
+                    )
+                  : Container();
+            },
+          ),
         ),
         child: Row(
           children: [
             ...widget.leading,
             Expanded(
               child: TextField(
+                key: textFieldKey,
                 maxLines: widget.maxLines,
                 minLines: widget.minLines,
                 maxLength: widget.maxLength,

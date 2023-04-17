@@ -1,6 +1,6 @@
 part of flutter_mentions;
 
-enum SuggestionPosition { Top, Bottom }
+enum SuggestionPosition { Top, Bottom, Cursor }
 
 class LengthMap {
   LengthMap({
